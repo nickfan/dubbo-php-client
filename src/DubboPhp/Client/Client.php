@@ -9,6 +9,8 @@
 namespace DubboPhp\Client;
 
 
+use Psr\Log\LoggerInterface;
+
 class Client
 {
     const VERSION_DEFAULT = '0.0.0';
@@ -25,14 +27,21 @@ class Client
     ];
     protected static $protocols = [
     ];
+    /**
+     * @var null|LoggerInterface
+     */
+    protected $logger;
+
 
     /**
      * Client constructor.
      * @param array $options
+     * @param LoggerInterface|null $logger
      */
-    public function __construct($options = [])
+    public function __construct($options = [], LoggerInterface $logger=null)
     {
         $this->register = new Register($options);
+        $this->logger = $logger;
     }
 
     public function factory($options=[]){
@@ -70,7 +79,7 @@ class Client
         }
         if(!isset(self::$protocols[$protocol])){
             $providerName = 'DubboPhp\\Client\\Protocols\\'.ucfirst($protocol);
-            self::$protocols[$protocol] = new $providerName($url,$debug);
+            self::$protocols[$protocol] = new $providerName($url,$debug,$this->logger);
         }
         return self::$protocols[$protocol];
     }

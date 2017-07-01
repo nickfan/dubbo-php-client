@@ -12,6 +12,8 @@ use Illuminate\Support\ServiceProvider;
 
 use Illuminate\Foundation\Application as LaravelApplication;
 use Laravel\Lumen\Application as LumenApplication;
+use Monolog\Handler\StreamHandler;
+use Monolog\Logger;
 
 class DubboPhpClientServiceProvider extends ServiceProvider
 {
@@ -39,6 +41,22 @@ class DubboPhpClientServiceProvider extends ServiceProvider
         $this->mergeConfigFrom($source, 'dubbo_cli');
     }
 
+    protected function getLoggerByParams($parameters=[]){
+        $logger = null;
+        if(isset($parameters['logger']) && !empty($parameters['logger'])){
+            if($parameters['logger']===true){
+                if(isset($parameters['log_file']) && !empty($parameters['log_file'])){
+                    $logger = new Logger('dubbo_rpc');
+                    $logger->pushHandler(new StreamHandler($parameters['log_file'], Logger::DEBUG));
+                }else{
+                    $logger = $this->app['log']->getMonolog();
+                }
+            }elseif(is_string($parameters) && class_exists($parameters)){
+                $logger = $this->app->make($parameters);
+            }
+        }
+        return $logger;
+    }
     /**
      * Register the service provider.
      */
@@ -46,10 +64,11 @@ class DubboPhpClientServiceProvider extends ServiceProvider
     {
         $this->app->bind('dubbo_cli.factory', function ($app,$parameters=[]) {
             $parameters+=$app['config']->get('dubbo_cli.default',[]);
-            return new Client($parameters);
+            return new Client($parameters,$this->getLoggerByParams($parameters));
         });
         $this->app->singleton('dubbo_cli',function($app){
-            return new Client($app['config']->get('dubbo_cli.default',[]));
+            $parameters = $app['config']->get('dubbo_cli.default',[]);
+            return new Client($parameters,$this->getLoggerByParams($parameters));
         });
         $this->app->alias('dubbo_cli.factory', 'DubboPhp\Client\Client');
         $this->app->alias('dubbo_cli', 'DubboPhp\Client\Client');

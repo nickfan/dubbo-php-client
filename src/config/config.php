@@ -1,6 +1,9 @@
 <?php
 return [
 
+    'logger'=>true,
+    'log_file'=>null,
+
     'default'=>[
         /**
          * zookeeper service address (host:port) default localhost:2181

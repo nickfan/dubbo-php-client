@@ -10,15 +10,16 @@ namespace DubboPhp\Client\Protocols;
 
 use DubboPhp\Client\DubboPhpException;
 use DubboPhp\Client\Invoker;
+use Psr\Log\LoggerInterface;
 
 class Hessian extends Invoker
 {
-    public function __construct($url=null, $debug=false)
+    public function __construct($url=null, $debug=false,LoggerInterface $logger=null)
     {
         //@todo implement method
         throw new DubboPhpException('Protocol not implemented yet.');
 
-        parent::__construct($url,$debug);
+        parent::__construct($url,$debug,$logger);
     }
 
     public function __call($name, $arguments)

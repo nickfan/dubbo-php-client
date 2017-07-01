@@ -9,6 +9,8 @@
 namespace DubboPhp\Client;
 
 
+use Psr\Log\LoggerInterface;
+
 abstract class Invoker{
     protected $invokerDesc;
     protected $url;
@@ -16,11 +18,17 @@ abstract class Invoker{
     protected $debug;
     protected $notification = false;
     protected $cluster;
-    public function __construct($url=null, $debug=false) {
+    /**
+     * @var LoggerInterface
+     */
+    protected $logger;
+
+    public function __construct($url=null, $debug=false,LoggerInterface $logger=null) {
         // server URL
         $this->url = $url;
         $this->debug;
         $this->cluster = Cluster::getInstance();
+        $this->logger = $logger;
     }
     public function setRPCNotification($notification = true) {
         $this->notification = (bool) $notification;

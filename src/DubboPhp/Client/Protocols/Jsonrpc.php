@@ -10,12 +10,13 @@ namespace DubboPhp\Client\Protocols;
 
 use DubboPhp\Client\DubboPhpException;
 use DubboPhp\Client\Invoker;
+use Psr\Log\LoggerInterface;
 
 class Jsonrpc extends Invoker{
 
-    public function __construct($url=null, $debug=false)
+    public function __construct($url=null, $debug=false,LoggerInterface $logger=null)
     {
-        parent::__construct($url,$debug);
+        parent::__construct($url,$debug,$logger);
     }
 
     public function __call($name, $arguments)
@@ -41,14 +42,18 @@ class Jsonrpc extends Invoker{
         }
 
         // prepares the request
-        $request = array(
+        $requestParam = array(
             'method' => $name,
             'params' => $params,
             'id' => $currentId
         );
         // curl -i -H 'content-type: application/json' -X POST -d '{"jsonrpc": "2.0", "method": "hello", "params": [ "World"],"id": 1 , "version":"1.0.0"}' 'http://127.0.0.1:8080/com.dubbo.demo.HelloService'
 //        echo 'curl -i -H \'content-type: application/json\' -X POST -d \''.json_encode($request).'\' \''.$this->url.'\''.PHP_EOL;
-        $request = json_encode($request);
+        $request = json_encode($requestParam);
+        !is_null($this->logger) && $this->logger->debug('DubboRpc Call Parameters',[
+            'request'=>$requestParam,
+        ]);
+        !is_null($this->logger) && $this->logger->debug('DubboRpc Call CURL CMD: '.'curl -i -H \'content-type: application/json\' -X POST -d \''.$request.'\' \''.$this->url.'\'');
         $this->debug && $this->debug.='***** Request *****'."\n".$request."\n".'***** End Of request *****'."\n\n";
 
         $ch = curl_init();
@@ -63,6 +68,11 @@ class Jsonrpc extends Invoker{
         $curlErrorCode = curl_errno($ch);
         $curlErrorMessage = curl_error($ch);
         curl_close($ch);
+        !is_null($this->logger) && $this->logger->debug('DubboRpc Call Response',[
+            'error_code'=>$curlErrorCode,
+            'error_msg'=>$curlErrorMessage,
+            'content'=>$responseContent,
+        ]);
 //        echo '$curlErrorCode:'.$curlErrorCode.PHP_EOL;
 //        echo '$curlErrorMessage:'.$curlErrorMessage.PHP_EOL;
 //        echo '$responseContent:'.PHP_EOL.$responseContent.PHP_EOL;
