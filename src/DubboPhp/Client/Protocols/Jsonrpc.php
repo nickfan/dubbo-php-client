@@ -50,11 +50,14 @@ class Jsonrpc extends Invoker{
         // curl -i -H 'content-type: application/json' -X POST -d '{"jsonrpc": "2.0", "method": "hello", "params": [ "World"],"id": 1 , "version":"1.0.0"}' 'http://127.0.0.1:8080/com.dubbo.demo.HelloService'
 //        echo 'curl -i -H \'content-type: application/json\' -X POST -d \''.json_encode($request).'\' \''.$this->url.'\''.PHP_EOL;
         $request = json_encode($requestParam);
-        !is_null($this->logger) && $this->logger->debug('DubboRpc Call Parameters',[
+
+        $this->debug==true && !is_null($this->logger) && $this->logger->debug('DubboRpc Call Parameters',[
             'request'=>$requestParam,
         ]);
-        !is_null($this->logger) && $this->logger->debug('DubboRpc Call CURL CMD: '.'curl -i -H \'content-type: application/json\' -X POST -d \''.$request.'\' \''.$this->url.'\'');
-        $this->debug && $this->debug.='***** Request *****'."\n".$request."\n".'***** End Of request *****'."\n\n";
+        $curlcmd = 'curl -i -H \'content-type: application/json\' -X POST -d \''.json_encode($request).'\' \''.$this->url.'\''.PHP_EOL;
+        $this->debug==true && !is_null($this->logger) && $this->logger->debug('DubboRpc Call CURL CMD: '.$curlcmd);
+
+        //@file_put_contents('/tmp/dev.log',date('Y-m-d H:i:s').' [CURL] '.__METHOD__.'#'.__LINE__.' '.PHP_EOL.$curlcmd.PHP_EOL,FILE_APPEND);
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $this->url);
@@ -68,7 +71,7 @@ class Jsonrpc extends Invoker{
         $curlErrorCode = curl_errno($ch);
         $curlErrorMessage = curl_error($ch);
         curl_close($ch);
-        !is_null($this->logger) && $this->logger->debug('DubboRpc Call Response',[
+        $this->debug==true && !is_null($this->logger) && $this->logger->debug('DubboRpc Call Response',[
             'error_code'=>$curlErrorCode,
             'error_msg'=>$curlErrorMessage,
             'content'=>$responseContent,
@@ -76,7 +79,9 @@ class Jsonrpc extends Invoker{
 //        echo '$curlErrorCode:'.$curlErrorCode.PHP_EOL;
 //        echo '$curlErrorMessage:'.$curlErrorMessage.PHP_EOL;
 //        echo '$responseContent:'.PHP_EOL.$responseContent.PHP_EOL;
-        
+
+        //@file_put_contents('/tmp/dev.log',date('Y-m-d H:i:s').' [CONTENT] '.__METHOD__.'#'.__LINE__.' '.PHP_EOL.$responseContent.PHP_EOL,FILE_APPEND);
+
         if ($responseContent === FALSE)  {
             throw new DubboPhpException('Unable to connect to '.$this->url.' :'.$curlErrorMessage,$curlErrorCode);
         }
@@ -92,6 +97,7 @@ class Jsonrpc extends Invoker{
         // debug output
         if ($this->debug) {
             //echo nl2br($debug);
+            //@file_put_contents('/tmp/dev.log',date('Y-m-d H:i:s').' [RESP] '.__METHOD__.'#'.__LINE__.' '.PHP_EOL.var_export($response,true).PHP_EOL,FILE_APPEND);
         }
 
         // final checks and return
@@ -102,6 +108,7 @@ class Jsonrpc extends Invoker{
             }
             if (isset($response['error'])) {
                 //var_dump($response);
+                //@file_put_contents('/tmp/dev.log',date('Y-m-d H:i:s').' [RESP_ERR] '.__METHOD__.'#'.__LINE__.' '.PHP_EOL.var_export($response,true).PHP_EOL,FILE_APPEND);
                 $responseErrorCode = isset($response['error']['code'])?$response['error']['code']:0;
                 $responseErrorMessage = isset($response['error']['message'])?$response['error']['message']:'';
                 throw new DubboPhpException('Response error: '.$responseErrorMessage,$responseErrorCode);

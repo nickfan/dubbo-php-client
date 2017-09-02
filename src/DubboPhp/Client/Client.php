@@ -17,6 +17,7 @@ class Client
     const PROTOCOL_JSONRPC = 'jsonrpc';
     const PROTOCOL_HESSIAN = 'hessian';
 
+    protected $debug = false;
     /**
      * @var Register
      */
@@ -42,6 +43,9 @@ class Client
     {
         $this->register = new Register($options);
         $this->logger = $logger;
+        if(isset($options['debug']) && $options['debug']==true){
+            $this->debug = true;
+        }
     }
 
     public function factory($options=[]){
@@ -62,7 +66,7 @@ class Client
         $invokerDesc = new InvokerDesc($serviceName, $serviceVersion, $serviceGroup);
         $invoker = $this->register->getInvoker($invokerDesc);
         if(!$invoker){
-            $invoker = $this->makeInvokerByProtocol($serviceProtocol);
+            $invoker = $this->makeInvokerByProtocol($serviceProtocol,$invokerDesc);
             $this->register->register($invokerDesc,$invoker);
         }
         return $invoker;
@@ -73,15 +77,25 @@ class Client
      * @return Invoker instance of specific protocol
      * @throws \DubboPhp\Client\DubboPhpException
      */
-    private function makeInvokerByProtocol($protocol=self::PROTOCOL_JSONRPC,$url=null, $debug=false){
+    private function makeInvokerByProtocol($protocol=self::PROTOCOL_JSONRPC,InvokerDesc $invokerDesc){
         if(!isset(self::$protocolSupports[$protocol]) || self::$protocolSupports[$protocol]!=true){
             throw new DubboPhpException('Protocol Not Supported yet.');
         }
-        if(!isset(self::$protocols[$protocol])){
-            $providerName = 'DubboPhp\\Client\\Protocols\\'.ucfirst($protocol);
-            self::$protocols[$protocol] = new $providerName($url,$debug,$this->logger);
+        $url = null;
+//        $protocolKey = $protocol.$invokerDesc->toString();
+        if($this->debug && !empty($this->logger)){
+            $this->logger->debug('['.__METHOD__.']@'.__LINE__,[
+//                'protocolKey'=>$protocolKey,
+                'invokerDesc'=>$invokerDesc->toString(),
+            ]);
         }
-        return self::$protocols[$protocol];
+        $providerName = 'DubboPhp\\Client\\Protocols\\'.ucfirst($protocol);
+        return new $providerName($url,$this->debug,$this->logger);
+//        if(!isset(self::$protocols[$protocolKey])){
+//            $providerName = 'DubboPhp\\Client\\Protocols\\'.ucfirst($protocol);
+//            self::$protocols[$protocol] = new $providerName($url,$this->debug,$this->logger);
+//        }
+//        return self::$protocols[$protocolKey];
     }
 
 }
