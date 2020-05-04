@@ -14,6 +14,7 @@ use Psr\Log\LoggerInterface;
 class Client
 {
     const VERSION_DEFAULT = '0.0.0';
+    const PROTOCOL_HTTP = 'http';
     const PROTOCOL_JSONRPC = 'jsonrpc';
     const PROTOCOL_HESSIAN = 'hessian';
 
@@ -24,6 +25,7 @@ class Client
     protected $register;
     protected static $protocolSupports = [
         self::PROTOCOL_JSONRPC => true,
+//        self::PROTOCOL_HTTP => true,
         self::PROTOCOL_HESSIAN => false,
     ];
     protected static $protocols = [

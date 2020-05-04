@@ -39,11 +39,11 @@ class InvokerDesc
     }
 
     public function isMatch($group,$version,$schema='jsonrpc'){
-        return $this->group === $group && $this->version === $version && $this->schema === $schema;
+        return $this->group === $group && $this->version === $version && ($this->schema === $schema || (in_array($this->schema,['jsonrpc','http']) && in_array($schema,['jsonrpc','http'])));
     }
 
     public function isMatchDesc($desc){
-        return $this->group == $desc->group && $this->version == $desc->version && $this->schema == $desc->schema;
+        return $this->group == $desc->group && $this->version == $desc->version && ($this->schema === $desc->schema || (in_array($this->schema,['jsonrpc','http']) && in_array($desc->schema,['jsonrpc','http'])));
     }
 
 }
